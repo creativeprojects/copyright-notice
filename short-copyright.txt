@@ -1,0 +1,4 @@
+/*
+ * Copyright (C) {{.Year}} CreativeProjects.
+ * All Rights Reserved​
+ */
