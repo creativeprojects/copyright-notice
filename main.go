@@ -101,7 +101,7 @@ func main() {
 
 	// Load the copyright notice template
 	clog.Infof("analyzing %d source files", fileQueue.Len())
-	copyrightNotice, err := getFullCopyrightNoticeFromTemplate(&copyrightData{Year: time.Now().Year()})
+	copyrightNotice, err := getCopyrightNoticeFromTemplate(flags.copyrightFilename, &copyrightData{Year: time.Now().Year()})
 	if err != nil {
 		clog.Errorf("cannot load copyright template: %w", err)
 		return

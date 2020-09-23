@@ -16,11 +16,6 @@ const (
 	FileErrorReading     = "error reading file: %w"
 )
 
-var (
-	// UTF8BOM represents the 3 bytes of the BOM added by Microsoft IDEs
-	UTF8BOM = []byte{0xef, 0xbb, 0xbf}
-)
-
 type File struct {
 	name    string
 	size    int
@@ -92,12 +87,7 @@ func (f *File) IsReady() bool {
 }
 
 func (f *File) HasUTF8BOM() bool {
-	if len(f.content) < 3 {
-		return false
-	}
-	return f.content[0] == UTF8BOM[0] &&
-		f.content[1] == UTF8BOM[1] &&
-		f.content[2] == UTF8BOM[2]
+	return hasUTF8BOM(f.content)
 }
 
 // Bytes returns the file content (with the UTF8 BOM stripped out if any)
