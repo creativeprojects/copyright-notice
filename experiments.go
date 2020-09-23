@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	bufferDefaultSize = 16384
+	defaultBufferSize = 16384
 )
 
 var (
@@ -24,7 +24,7 @@ func init() {
 		New: func() interface{} {
 			return newSourceFileReader(
 				// Creates a reader using stdin. Actually stdin will never be read but a valid default is needed
-				bufio.NewReaderSize(os.Stdin, bufferDefaultSize),
+				bufio.NewReaderSize(os.Stdin, defaultBufferSize),
 				ioutil.NopCloser(os.Stdin),
 			)
 		},
@@ -71,7 +71,7 @@ func getFileReader(fileName string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	buffer := bufio.NewReaderSize(file, bufferDefaultSize)
+	buffer := bufio.NewReaderSize(file, defaultBufferSize)
 	bom, err := buffer.Peek(3)
 	if err != nil {
 		progress(fileName, fileStatusError, err)

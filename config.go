@@ -33,19 +33,33 @@ func (a *StringSlice) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Config struct {
-	Profiles map[string]ConfigProfiles `yaml:"profiles"`
+	MaxFileSize       int64                     `yaml:"max-file-size"`
+	DefaultBufferSize int                       `yaml:"default-buffer-size"`
+	Profiles          map[string]ConfigProfiles `yaml:"profiles"`
 }
 
 type ConfigProfiles struct {
-	Source       *StringSlice `yaml:"source"`
-	Extensions   *StringSlice `yaml:"extensions"`
-	BOM          string       `yaml:"utf8-bom"`
-	Year         string       `yaml:"year"`
-	ExcludeFrom  string       `yaml:"exclude-from"`
-	Excludes     *StringSlice `yaml:"excludes"`
-	Copyright    string       `yaml:"copyright"`
-	DetectOwn    string       `yaml:"detect-own"`
-	DetectOthers string       `yaml:"detect-others"`
+	Source               *StringSlice `yaml:"source"`
+	Extensions           *StringSlice `yaml:"extensions"`
+	BOM                  string       `yaml:"utf8-bom"`
+	Year                 string       `yaml:"year"`
+	ExcludeFrom          string       `yaml:"exclude-from"`
+	ExcludeFromGitIgnore string       `yaml:"exclude-gitignore"`
+	Excludes             *StringSlice `yaml:"excludes"`
+	Copyright            string       `yaml:"copyright"`
+	DetectOwn            string       `yaml:"detect-own"`
+	DetectOthers         string       `yaml:"detect-others"`
+	CommitChanges        string       `yaml:"commit-changes"`
+	CommitMessage        string       `yaml:"commit-message"`
+	Output               string       `yaml:"output"`
+}
+
+// NewConfig creates a new configuration with the default values
+func NewConfig() Config {
+	return Config{
+		MaxFileSize:       maxFileSize,
+		DefaultBufferSize: defaultBufferSize,
+	}
 }
 
 func LoadConfig(reader io.Reader) (Config, error) {

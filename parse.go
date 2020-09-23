@@ -63,7 +63,10 @@ func parseDirectory(directory string, exclusions *exclusion, addTotal func(int),
 			parseDirectory(fullName, exclusions, addTotal, addFile)
 		} else if file.Size() > minFileSize && matchExtension(file.Name()) {
 			fileQueue.PushBack(FileEntry{fullName, file.Size()})
-			if file.Size() > maxSize {
+			// update the max size of the files we're going to analyze,
+			// we keep the oversized file for reporting, but we won't build
+			// a buffer of that size
+			if file.Size() > maxSize && file.Size() <= maxFileSize {
 				maxSize = file.Size()
 			}
 		}

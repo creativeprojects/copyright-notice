@@ -177,7 +177,7 @@ func addCopyrightNotice(fileName string, copyrightNotice, buffer []byte) error {
 	randomGenerator.Read(randomBytes)
 	tempFilename := filepath.Join(filepath.Dir(fileName), "$"+fmt.Sprintf("%x", randomBytes)+"$"+filepath.Base(fileName))
 
-	err = createFile(tempFilename, copyrightNotice, buffer)
+	err = createFile(tempFilename, copyrightNotice, buffer, false)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func addCopyrightNotice(fileName string, copyrightNotice, buffer []byte) error {
 	return nil
 }
 
-func createFile(fileName string, header, content []byte) error {
+func createFile(fileName string, header, content []byte, withBOM bool) error {
 	outputFile, err := os.Create(fileName)
 	if err != nil {
 		return err

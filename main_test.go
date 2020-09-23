@@ -48,6 +48,7 @@ func TestMaxSize(t *testing.T) {
 // BenchmarkReadFromBufIOFromPoolToPoolOfBuffer-12     7639	    153574 ns/op	     629 B/op	       3 allocs/op
 // BenchmarkReadFromBufIOToByteSlice-12                7045	    149583 ns/op	   28973 B/op	      18 allocs/op
 // BenchmarkReadFromBufIOFromPoolToByteSlice-12        7575	    144371 ns/op	   14125 B/op	      15 allocs/op
+// BenchmarkFileRead-12                                7591	    136650 ns/op	     213 B/op	       3 allocs/op
 
 // Results
 // ========
@@ -303,7 +304,7 @@ func BenchmarkReadFromBufIOToByteSlice(b *testing.B) {
 		if err != nil {
 			b.Log("Cannot open file", fileEntry.Name, err)
 		} else {
-			buffer := make([]byte, 0, fileEntry.Size)
+			buffer := make([]byte, fileEntry.Size)
 			read, err := reader.Read(buffer)
 			if err != nil {
 				b.Log("Cannot read file", fileEntry.Name, err)
@@ -333,7 +334,7 @@ func BenchmarkReadFromBufIOFromPoolToByteSlice(b *testing.B) {
 		if err != nil {
 			b.Log("Cannot open file", fileEntry.Name, err)
 		} else {
-			buffer := make([]byte, 0, fileEntry.Size)
+			buffer := make([]byte, fileEntry.Size)
 			read, err := reader.Read(buffer)
 			if err != nil {
 				b.Log("Cannot read file", fileEntry.Name, err)
@@ -343,6 +344,33 @@ func BenchmarkReadFromBufIOFromPoolToByteSlice(b *testing.B) {
 		}
 		reader.Close()
 		bufReaderPool.Put(reader)
+		e = e.Next()
+		if e == nil {
+			e = fileQueue.Front()
+		}
+	}
+}
+
+func BenchmarkFileRead(b *testing.B) {
+	b.ReportAllocs()
+	if fileQueue.Len() == 0 {
+		b.Skip("No source file")
+	}
+	e := fileQueue.Front()
+
+	file := NewFile(int(maxSize))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		fileEntry := e.Value.(FileEntry)
+		err := file.Read(fileEntry.Name, fileEntry.Size)
+		if err != nil {
+			b.Log("Cannot read file", fileEntry.Name, err)
+		} else {
+			if !file.IsReady() {
+				b.Log("Error reading file", fileEntry.Name)
+			}
+		}
 		e = e.Next()
 		if e == nil {
 			e = fileQueue.Front()
