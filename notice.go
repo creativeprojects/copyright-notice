@@ -72,7 +72,7 @@ func checkForCopyrightNoticeInFile(fileEntry FileEntry, copyrightNotice []byte) 
 		currentYear := time.Now().Year()
 		if year < currentYear {
 			// We need to update the existing copyright header
-			if !config.dryRun {
+			if !flags.dryRun {
 				buffer = detectOwnHeader.ReplaceAll(buffer, []byte("${1}"+strconv.Itoa(currentYear)+"${3}"))
 				err = ioutil.WriteFile(fileEntry.Name, buffer, 0666)
 				if err != nil {
@@ -86,7 +86,7 @@ func checkForCopyrightNoticeInFile(fileEntry FileEntry, copyrightNotice []byte) 
 		progress(fileEntry.Name, fileStatusWithCopyright, nil)
 	} else {
 		// We need to add the new copyright header
-		if !config.dryRun {
+		if !flags.dryRun {
 			err = addCopyrightNotice(fileEntry.Name, copyrightNotice, buffer)
 			if err != nil {
 				progress(fileEntry.Name, fileStatusError, err)
@@ -160,7 +160,7 @@ func checkForCopyrightNoticeInFile2(fileEntry FileEntry, copyrightNotice []byte)
 		currentYear := time.Now().Year()
 		if year < currentYear {
 			// We need to update the existing copyright header
-			if !config.dryRun {
+			if !flags.dryRun {
 				buffer = detectOwnHeader.ReplaceAll(buffer, []byte("${1}"+strconv.Itoa(currentYear)+"${3}"))
 				err = ioutil.WriteFile(fileEntry.Name, buffer, 0666)
 				if err != nil {
@@ -174,7 +174,7 @@ func checkForCopyrightNoticeInFile2(fileEntry FileEntry, copyrightNotice []byte)
 		progress(fileEntry.Name, fileStatusWithCopyright, nil)
 	} else {
 		// We need to add the new copyright header
-		if !config.dryRun {
+		if !flags.dryRun {
 			err = addCopyrightNotice(fileEntry.Name, copyrightNotice, buffer)
 			if err != nil {
 				progress(fileEntry.Name, fileStatusError, err)

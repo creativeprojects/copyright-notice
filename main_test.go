@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"go/build"
 	"io"
 	"sync"
 	"testing"
@@ -11,7 +10,7 @@ import (
 )
 
 func init() {
-	config.extensions = []string{".go"}
+	flags.extensions = []string{".go"}
 	cleanupConfiguration()
 
 	excludeList := []string{
@@ -25,10 +24,10 @@ func init() {
 	exclusions := newExclusion(excludeList...)
 
 	parseDir := "."
-	gopath := build.Default.GOPATH
-	if gopath != "" {
-		parseDir = gopath
-	}
+	// gopath := build.Default.GOPATH
+	// if gopath != "" {
+	// 	parseDir = gopath
+	// }
 	clog.SetDefaultLogger(clog.NewLogger(clog.NewDiscardHandler()))
 	parseDirectory(parseDir, exclusions, func(int) {}, func() {})
 }

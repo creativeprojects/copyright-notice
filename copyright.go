@@ -10,7 +10,7 @@ type copyrightData struct {
 }
 
 func getFullCopyrightNoticeFromTemplate(data interface{}) ([]byte, error) {
-	return loadTemplate(config.copyrightFilename, data)
+	return loadTemplate(flags.copyrightFilename, data)
 }
 
 func loadTemplate(filename string, data interface{}) ([]byte, error) {

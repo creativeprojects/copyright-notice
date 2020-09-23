@@ -65,30 +65,35 @@ func main() {
 	var err error
 
 	flag.Parse()
+	if flags.help {
+		fmt.Print("\nUsage of copyright-notice:\n\n")
+		flag.PrintDefaults()
+		return
+	}
 	setupLogger()
-	clog.Infof("starting copyright notice in source folder: '%s'", config.sourceDirectory)
+	clog.Infof("starting copyright notice in source folder: '%s'", flags.sourceDirectory)
 
 	// We need at least one file extension
-	if len(config.extensions) == 0 {
+	if len(flags.extensions) == 0 {
 		clog.Error("you haven't specified any file extension, for example '--ext js' for Javascript files")
 		return
 	}
 	cleanupConfiguration()
-	clog.Infof("searching for source files with extensions %v", config.extensions)
+	clog.Infof("searching for source files with extensions %v", flags.extensions)
 
 	// Load exclusion list from file
 	var excludeList []string
-	if config.excludeFilename != "" {
-		excludeList, err = readLines(config.excludeFilename)
+	if flags.excludeFilename != "" {
+		excludeList, err = readLines(flags.excludeFilename)
 		if err != nil {
 			clog.Errorf("error while reading exclusion file: %w", err)
 		}
 	}
 	// Generate the exclusions
-	exclusions := newExclusion(append(excludeList, config.exclude...)...)
+	exclusions := newExclusion(append(excludeList, flags.exclude...)...)
 
 	// Parse the source directory for files
-	parseDirectories(config.sourceDirectory, exclusions)
+	parseDirectories(flags.sourceDirectory, exclusions)
 	if fileQueue.Len() == 0 {
 		clog.Warning("found absolutely no file matching these extensions")
 		return
@@ -107,7 +112,7 @@ func main() {
 	fmt.Println("")
 
 	// Display results in debug mode
-	if config.verbose {
+	if flags.verbose {
 		displayDetailedResults()
 	} else {
 		displaySummaryResults()

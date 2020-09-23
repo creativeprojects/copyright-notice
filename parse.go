@@ -71,7 +71,7 @@ func parseDirectory(directory string, exclusions *exclusion, addTotal func(int),
 }
 
 func matchExtension(fileName string) bool {
-	for _, ext := range config.extensions {
+	for _, ext := range flags.extensions {
 		if strings.HasSuffix(fileName, ext) {
 			return true
 		}

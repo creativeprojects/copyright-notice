@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -59,4 +61,22 @@ func (e *exclusion) matchPath(fullname string) bool {
 		}
 	}
 	return false
+}
+
+// readLines reads a whole file into memory
+// and returns a slice of its lines.
+// this is used to read an exclusion file
+func readLines(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
 }
