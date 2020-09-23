@@ -58,29 +58,6 @@ func TestMaxSize(t *testing.T) {
 // BenchmarkReadIntoBufIO-6                                   30105             40449 ns/op           17918 B/op          9 allocs/op
 // BenchmarkReadIntoBufIOFromPool-6                           35013             33851 ns/op            1382 B/op          6 allocs/op
 
-func BenchmarkReadIntoByteSlice(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	e := fileQueue.Front()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		buffer, err := readFile(fileEntry.Name)
-		if err != nil {
-			b.Log("Cannot read file", fileEntry.Name, err)
-		} else if len(buffer) == 0 {
-			b.Log("Empty file", fileEntry.Name)
-		}
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
-
 func BenchmarkReadIntoBytesBuffer(b *testing.B) {
 	b.ReportAllocs()
 	if fileQueue.Len() == 0 {

@@ -8,14 +8,6 @@ import (
 	"path/filepath"
 )
 
-// Error message
-const (
-	FileErrorInvalidName = "invalid file descriptor"
-	FileErrorTooBig      = "file is too big"
-	FileErrorCannotOpen  = "cannot open file: %w"
-	FileErrorReading     = "error reading file: %w"
-)
-
 type File struct {
 	name    string
 	size    int
@@ -38,16 +30,17 @@ func (f *File) Reset() *File {
 }
 
 func (f *File) Read(name string, size int64) error {
+	const maxInt = 2147483647
 	if f.ready {
 		// clear up the buffer first
 		f.Reset()
 	}
 	if name == "" {
-		return errors.New(FileErrorInvalidName)
+		return NewError(FileErrorInvalidName, nil)
 	}
 	// max value for an int
-	if f.size > 2147483647 {
-		return errors.New(FileErrorTooBig)
+	if f.size > maxInt {
+		return NewError(FileErrorTooBig, errors.New("file size (int64) doesn't fit in an int32"))
 	}
 
 	f.name = name
@@ -59,11 +52,11 @@ func (f *File) Read(name string, size int64) error {
 		return nil
 	}
 	if f.size > cap(f.content) {
-		return errors.New(FileErrorTooBig)
+		return NewError(FileErrorTooBig, fmt.Errorf("file size = %d bigger than buffer size = %d", f.size, cap(f.content)))
 	}
 	file, err := os.Open(f.name)
 	if err != nil {
-		return fmt.Errorf(FileErrorCannotOpen, err)
+		return NewError(FileErrorCannotOpen, err)
 	}
 	defer file.Close()
 
@@ -72,10 +65,10 @@ func (f *File) Read(name string, size int64) error {
 	// and read the whole file
 	read, err := file.Read(f.content)
 	if err != nil && err != io.EOF {
-		return fmt.Errorf(FileErrorReading, err)
+		return NewError(FileErrorReading, err)
 	}
 	if err == io.EOF || read != f.size {
-		return fmt.Errorf(FileErrorReading, fmt.Errorf("file size = %d bytes but read %d bytes instead", f.size, read))
+		return NewError(FileErrorReading, fmt.Errorf("file size = %d bytes but read %d bytes instead", f.size, read))
 	}
 
 	f.ready = true

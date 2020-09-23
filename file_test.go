@@ -17,7 +17,7 @@ func TestFileErrorInvalidDescriptor(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		err := file.Read("", bufferSize)
 		if assert.Error(t, err) {
-			assert.Contains(t, err.Error(), FileErrorInvalidName)
+			assert.Equal(t, FileErrorInvalidName, err.(*Error).Class())
 		}
 
 		// reuse the same buffer for the next file in test
@@ -34,7 +34,7 @@ func TestFileErrorTooBig(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		err := file.Read("some file.txt", int64(size+1))
 		if assert.Error(t, err) {
-			assert.Contains(t, err.Error(), FileErrorTooBig)
+			assert.Equal(t, FileErrorTooBig, err.(*Error).Class())
 		}
 		assert.False(t, file.IsReady())
 
@@ -51,7 +51,7 @@ func TestFileErrorCannotOpen(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		err := file.Read("some file.txt", 10)
 		if assert.Error(t, err) {
-			assert.Contains(t, err.Error(), "cannot open file")
+			assert.Equal(t, FileErrorCannotOpen, err.(*Error).Class())
 		}
 		assert.False(t, file.IsReady())
 
@@ -69,6 +69,7 @@ func TestFileReadTooLittle(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		err := file.Read(fmt.Sprintf("test_files/random%d.txt", size), size+1)
 		if assert.Error(t, err) {
+			assert.Equal(t, FileErrorReading, err.(*Error).Class())
 			assert.Contains(t, err.Error(), fmt.Sprintf("file size = %d bytes but read %d bytes instead", size+1, size))
 		}
 		assert.False(t, file.IsReady())

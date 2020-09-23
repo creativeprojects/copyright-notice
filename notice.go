@@ -36,6 +36,17 @@ func checkForCopyrightNoticeInFile(file *File, fileEntry FileEntry, copyrightNot
 
 	err = file.Read(fileEntry.Name, fileEntry.Size)
 	if err != nil {
+		if e, ok := err.(*Error); ok {
+			switch e.Class() {
+			case FileErrorCannotOpen:
+				progress(fileEntry.Name, fileStatusCannotOpen, err)
+			case FileErrorTooBig:
+				progress(fileEntry.Name, fileStatusTooBig, err)
+			default:
+				progress(fileEntry.Name, fileStatusError, err)
+			}
+			return
+		}
 		progress(fileEntry.Name, fileStatusError, err)
 		return
 	}

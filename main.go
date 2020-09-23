@@ -3,7 +3,6 @@ package main
 import (
 	"container/list"
 	"fmt"
-	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -117,58 +116,6 @@ func main() {
 	} else {
 		displaySummaryResults()
 	}
-}
-
-func readFile(fileName string) ([]byte, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		progress(fileName, fileStatusCannotOpen, err)
-		return nil, err
-	}
-	defer file.Close()
-	info, err := file.Stat()
-	if err != nil {
-		progress(fileName, fileStatusCannotOpen, err)
-		return nil, err
-	}
-	if info.Size() > maxFileSize {
-		progress(fileName, fileStatusTooBig, nil)
-		return nil, err
-	}
-	fileSize := int(info.Size())
-
-	// Read the first 3 bytes and see if it's a BOM.
-	// If it is, we're going to ignore it (and save the file without)
-	// Don't worry, Visual Studio will put it back eventually
-	var bom [3]byte
-	_, err = io.ReadFull(file, bom[:])
-	if err != nil {
-		progress(fileName, fileStatusError, err)
-		return nil, err
-	}
-	if bom[0] != 0xef || bom[1] != 0xbb || bom[2] != 0xbf {
-		_, err = file.Seek(0, 0) // Not a BOM -- seek back to the beginning
-		if err != nil {
-			progress(fileName, fileStatusError, err)
-			return nil, err
-		}
-	} else {
-		// Forget the first 3 bytes
-		fileSize -= 3
-	}
-
-	// Now read the whole file into buffer
-	buffer := make([]byte, fileSize)
-	read, err := file.Read(buffer)
-	if err != nil && err != io.EOF {
-		progress(fileName, fileStatusError, err)
-		return nil, err
-	}
-	if err == io.EOF || read != fileSize {
-		progress(fileName, fileStatusError, fmt.Errorf("file size = %d bytes but read %d bytes instead", fileSize, read))
-		return nil, err
-	}
-	return buffer, nil
 }
 
 func addCopyrightNotice(fileName string, copyrightNotice, buffer []byte) error {
