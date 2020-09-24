@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +14,7 @@ import (
 	"github.com/vbauerster/mpb/v5/decor"
 )
 
-func checkForCopyrightNotices(copyrightNotice []byte) {
+func checkForCopyrightNotices(fileQueue *list.List, copyrightNotice []byte) {
 	start := time.Now()
 	progress := mpb.New()
 	bar := progress.AddBar(int64(fileQueue.Len()),
@@ -106,7 +107,7 @@ func checkForCopyrightNoticeInFile(file *File, fileEntry FileEntry, copyrightNot
 	} else {
 		// We need to add the new copyright header
 		if !flags.dryRun {
-			err = addCopyrightNotice(fileEntry.Name, copyrightNotice, buffer)
+			err = file.AddHeader(copyrightNotice, false) // TODO: Keep UTF8 BOM
 			if err != nil {
 				progress(fileEntry.Name, fileStatusError, err)
 				return

@@ -4,8 +4,6 @@ import (
 	"container/list"
 	"fmt"
 	"math/rand"
-	"os"
-	"path/filepath"
 	"regexp"
 	"time"
 
@@ -24,7 +22,6 @@ type resultData struct {
 }
 
 var (
-	fileQueue         *list.List
 	results           []*list.List
 	detectOwnHeader   *regexp.Regexp
 	detectOtherHeader *regexp.Regexp
@@ -34,7 +31,6 @@ var (
 )
 
 func init() {
-	fileQueue = list.New()
 	results = make([]*list.List, fileStatusError+1)
 	for i := 0; i <= int(fileStatusError); i++ {
 		results[i] = &list.List{}
@@ -61,7 +57,6 @@ func init() {
 }
 
 func main() {
-	// var err error
 
 	flag.Parse()
 	if flags.help {
@@ -79,102 +74,68 @@ func main() {
 	}
 
 	for name, profile := range config.Profiles {
+		// log prefix should be displayed only if we have more than one profile
+		if len(config.Profiles) > 1 {
+			clog.SetPrefix(name + ":  ")
+		}
 		if profile.Source == nil || len(*profile.Source) == 0 {
-			clog.Warningf("skipping profile %s: no source folder defined", name)
+			clog.Warning("no source folder defined, skipping profile")
 			continue
 		}
 		if profile.Extensions == nil || len(*profile.Extensions) == 0 {
-			clog.Warningf("skipping profile %s: no file extension defined", name)
+			clog.Warning("no file extension defined, skipping profile")
 			continue
 		}
 		if profile.Copyright == "" {
-			clog.Warningf("skipping profile %s: no copyright file defined", name)
+			clog.Warning("no copyright file defined, skipping profile")
 			continue
 		}
-		clog.Infof("searching for source files %v in folder: %v", *profile.Extensions, *profile.Source)
+		clog.Infof("searching for source files %s in folder %s", *profile.Extensions, *profile.Source)
 
 		var excludeList []string
 		// Load exclusion list from file
 		if profile.ExcludeFrom != "" {
 			excludeList, err = readLines(profile.ExcludeFrom)
 			if err != nil {
-				clog.Errorf("skipping profile %s: error while reading exclusion file: %v", name, err)
+				clog.Warningf("error while reading exclusion file: %s, skipping profile", err)
 				continue
 			}
 		}
 		if profile.Excludes != nil && len(*profile.Excludes) > 0 {
 			excludeList = append(excludeList, *profile.Excludes...)
 		}
-		// // Generate the exclusions
-		// exclusions := newExclusion(append(excludeList, flags.exclude...)...)
+		// Generate the exclusions
+		exclusions := newExclusion(excludeList...)
 
-		// // Parse the source directory for files
-		// parseDirectories(flags.sourceDirectory, exclusions)
-		// if fileQueue.Len() == 0 {
-		// 	clog.Warning("found absolutely no file matching these extensions")
-		// 	return
-		// }
+		// Parse the source directory for files
+		parser := NewParser(*profile.Extensions, exclusions)
+		fileQueue := parser.Directories(*profile.Source)
+		if fileQueue.Len() == 0 {
+			clog.Warning("no matching file found")
+			continue
+		}
 
-		// // Load the copyright notice template
-		// clog.Infof("analyzing %d source files", fileQueue.Len())
-		// copyrightNotice, err := getCopyrightNoticeFromTemplate(flags.copyrightFilename, &copyrightData{Year: time.Now().Year()})
-		// if err != nil {
-		// 	clog.Errorf("cannot load copyright template: %w", err)
-		// 	return
-		// }
+		// Load the copyright notice template
+		copyrightNotice, err := getCopyrightNoticeFromTemplate(profile.Copyright, &copyrightData{Year: time.Now().Year()})
+		if err != nil {
+			clog.Errorf("cannot load copyright template: %v", err)
+			return
+		}
 
-		// // Merge all files with the copyright notice
-		// // checkForCopyrightNotices(copyrightNotice)
+		// Merge all files with the copyright notice
+		clog.Infof("analyzing %d source files", fileQueue.Len())
+		checkForCopyrightNotices(fileQueue, copyrightNotice)
 		// fmt.Println("")
 
-		// // Display results in debug mode
-		// if flags.verbose {
-		// 	displayDetailedResults()
-		// } else {
-		// 	displaySummaryResults()
-		// }
-	}
-}
-
-func addCopyrightNotice(fileName string, copyrightNotice, buffer []byte) error {
-	var err error
-	randomBytes := make([]byte, 10)
-	randomGenerator.Read(randomBytes)
-	tempFilename := filepath.Join(filepath.Dir(fileName), "$"+fmt.Sprintf("%x", randomBytes)+"$"+filepath.Base(fileName))
-
-	err = createFile(tempFilename, copyrightNotice, buffer, false)
-	if err != nil {
-		return err
-	}
-	// Move the temp file into place
-	err = os.Rename(tempFilename, fileName)
-	if err != nil {
-		// Try to delete the temp file
-		os.Remove(tempFilename)
-		return err
-	}
-	return nil
-}
-
-func createFile(fileName string, header, content []byte, withBOM bool) error {
-	outputFile, err := os.Create(fileName)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
-
-	// Write the copyright notice first
-	_, err = outputFile.Write(header)
-	if err != nil {
-		return err
+		// Display results in debug mode
+		if flags.verbose {
+			displayDetailedResults()
+		} else {
+			displaySummaryResults()
+		}
+		clog.SetPrefix("")
 	}
 
-	// Then write the file content
-	outputFile.Write(content)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func progress(fileName string, status fileStatus, err error) {
@@ -204,9 +165,9 @@ func displayResultList(list *list.List, statusMessage string) {
 	}
 	for e := list.Front(); e != nil; e = e.Next() {
 		status := e.Value.(*resultData)
-		details := fmt.Sprintf(". file: '%s'", status.fileName)
+		details := fmt.Sprintf(", file: '%s'", status.fileName)
 		if status.err != nil {
-			details += fmt.Sprintf(". error: '%s'", status.err)
+			details += fmt.Sprintf(", error: %s", status.err)
 		}
 		clog.Debug(statusMessage + details)
 	}

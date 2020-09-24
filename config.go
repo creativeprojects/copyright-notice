@@ -52,6 +52,7 @@ type ConfigProfile struct {
 	DetectOthers         string       `yaml:"detect-others"`
 	CommitChanges        string       `yaml:"commit-changes"`
 	CommitMessage        string       `yaml:"commit-message"`
+	CommitAuthor         string       `yaml:"commit-author"`
 	Output               string       `yaml:"output"`
 }
 
@@ -84,15 +85,20 @@ func LoadConfig(reader io.Reader) (Config, error) {
 
 func cleanupConfig(config *Config) {
 	for _, profile := range config.Profiles {
-		// We'll prefix the files extension by a dot if it's not there yet
-		if profile.Extensions == nil {
-			continue
-		}
-		for index, extension := range *profile.Extensions {
-			if extension[0] != '.' {
-				extension = "." + extension
+		// we'll prefix the files extension by a dot if it's not there yet
+		if profile.Extensions != nil {
+			for index, extension := range *profile.Extensions {
+				if extension[0] != '.' {
+					extension = "." + extension
+				}
+				(*profile.Extensions)[index] = extension
 			}
-			(*profile.Extensions)[index] = extension
+		}
+		// we expend the environment variables in paths
+		if profile.Source != nil {
+			for index, dir := range *profile.Source {
+				(*profile.Source)[index] = os.ExpandEnv(dir)
+			}
 		}
 	}
 }

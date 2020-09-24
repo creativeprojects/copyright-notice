@@ -19,7 +19,7 @@ func setupLogger(flags *Flags) func() {
 		handler, err = clog.NewFileHandler(flags.outputFilename, "", log.LstdFlags)
 		if err != nil {
 			// open the console as a backup
-			handler = clog.NewConsoleHandler("", 0)
+			handler = clog.NewTextHandler("", 0)
 			// and pushes a warning manually (there should be a better way of doing this?)
 			handler.LogEntry(clog.LogEntry{
 				Level:  clog.LevelWarning,
@@ -30,7 +30,7 @@ func setupLogger(flags *Flags) func() {
 			close = handler.(*clog.FileHandler).Close
 		}
 	} else {
-		handler = clog.NewConsoleHandler("", 0)
+		handler = clog.NewTextHandler("", 0)
 	}
 
 	level := clog.LevelInfo

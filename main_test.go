@@ -1,11 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"io"
-	"sync"
-	"testing"
-
 	"github.com/creativeprojects/clog"
 )
 
@@ -13,23 +8,23 @@ func init() {
 	// flags.extensions = []string{".go"}
 	// cleanupConfiguration()
 
-	excludeList := []string{
-		"**/.*",
-		"**/$*",
-		"bin",
-		"vendor",
-		"packages",
-		"node_modules",
-	}
-	exclusions := newExclusion(excludeList...)
+	// excludeList := []string{
+	// 	"**/.*",
+	// 	"**/$*",
+	// 	"bin",
+	// 	"vendor",
+	// 	"packages",
+	// 	"node_modules",
+	// }
+	// exclusions := newExclusion(excludeList...)
 
-	parseDir := "."
+	// parseDir := "."
 	// gopath := build.Default.GOPATH
 	// if gopath != "" {
 	// 	parseDir = gopath
 	// }
 	clog.SetDefaultLogger(clog.NewLogger(clog.NewDiscardHandler()))
-	parseDirectory(parseDir, exclusions, func(int) {}, func() {})
+	// parseDirectory(parseDir, exclusions, func(int) {}, func() {})
 }
 
 // func TestMaxSize(t *testing.T) {
@@ -58,238 +53,238 @@ func init() {
 // BenchmarkReadIntoBufIO-6                                   30105             40449 ns/op           17918 B/op          9 allocs/op
 // BenchmarkReadIntoBufIOFromPool-6                           35013             33851 ns/op            1382 B/op          6 allocs/op
 
-func BenchmarkReadFromBufIOToBuffer(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	e := fileQueue.Front()
+// func BenchmarkReadFromBufIOToBuffer(b *testing.B) {
+// 	b.ReportAllocs()
+// 	if fileQueue.Len() == 0 {
+// 		b.Skip("No source file")
+// 	}
+// 	e := fileQueue.Front()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		reader, err := getFileReader(fileEntry.Name)
-		if err != nil {
-			b.Log("Cannot open file", fileEntry.Name, err)
-		} else {
-			buffer := &bytes.Buffer{}
-			if buffer.Cap() < int(fileEntry.Size) {
-				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
-			}
-			written, err := io.Copy(buffer, reader)
-			if err != nil {
-				b.Log("Cannot read file", fileEntry.Name, err)
-			} else if written == 0 {
-				b.Log("Empty file", fileEntry.Name)
-			}
-		}
-		reader.Close()
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		fileEntry := e.Value.(FileEntry)
+// 		reader, err := getFileReader(fileEntry.Name)
+// 		if err != nil {
+// 			b.Log("Cannot open file", fileEntry.Name, err)
+// 		} else {
+// 			buffer := &bytes.Buffer{}
+// 			if buffer.Cap() < int(fileEntry.Size) {
+// 				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
+// 			}
+// 			written, err := io.Copy(buffer, reader)
+// 			if err != nil {
+// 				b.Log("Cannot read file", fileEntry.Name, err)
+// 			} else if written == 0 {
+// 				b.Log("Empty file", fileEntry.Name)
+// 			}
+// 		}
+// 		reader.Close()
+// 		e = e.Next()
+// 		if e == nil {
+// 			e = fileQueue.Front()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadFromBufIOToPoolOfBuffer(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	localBufferPool := sync.Pool{
-		New: func() interface{} {
-			return &bytes.Buffer{}
-		},
-	}
-	e := fileQueue.Front()
+// func BenchmarkReadFromBufIOToPoolOfBuffer(b *testing.B) {
+// 	b.ReportAllocs()
+// 	if fileQueue.Len() == 0 {
+// 		b.Skip("No source file")
+// 	}
+// 	localBufferPool := sync.Pool{
+// 		New: func() interface{} {
+// 			return &bytes.Buffer{}
+// 		},
+// 	}
+// 	e := fileQueue.Front()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		reader, err := getFileReader(fileEntry.Name)
-		if err != nil {
-			b.Log("Cannot open file", fileEntry.Name, err)
-		} else {
-			buffer := localBufferPool.Get().(*bytes.Buffer)
-			buffer.Reset()
-			if buffer.Cap() < int(fileEntry.Size) {
-				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
-			}
-			written, err := io.Copy(buffer, reader)
-			if err != nil {
-				b.Log("Cannot read file", fileEntry.Name, err)
-			} else if written == 0 {
-				b.Log("Empty file", fileEntry.Name)
-			}
-			localBufferPool.Put(buffer)
-		}
-		reader.Close()
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		fileEntry := e.Value.(FileEntry)
+// 		reader, err := getFileReader(fileEntry.Name)
+// 		if err != nil {
+// 			b.Log("Cannot open file", fileEntry.Name, err)
+// 		} else {
+// 			buffer := localBufferPool.Get().(*bytes.Buffer)
+// 			buffer.Reset()
+// 			if buffer.Cap() < int(fileEntry.Size) {
+// 				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
+// 			}
+// 			written, err := io.Copy(buffer, reader)
+// 			if err != nil {
+// 				b.Log("Cannot read file", fileEntry.Name, err)
+// 			} else if written == 0 {
+// 				b.Log("Empty file", fileEntry.Name)
+// 			}
+// 			localBufferPool.Put(buffer)
+// 		}
+// 		reader.Close()
+// 		e = e.Next()
+// 		if e == nil {
+// 			e = fileQueue.Front()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadFromBufIOFromPoolToBuffer(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	e := fileQueue.Front()
+// func BenchmarkReadFromBufIOFromPoolToBuffer(b *testing.B) {
+// 	b.ReportAllocs()
+// 	if fileQueue.Len() == 0 {
+// 		b.Skip("No source file")
+// 	}
+// 	e := fileQueue.Front()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		reader, err := getFileReaderFromPool(fileEntry.Name)
-		if err != nil {
-			b.Log("Cannot open file", fileEntry.Name, err)
-		} else {
-			buffer := &bytes.Buffer{}
-			if buffer.Cap() < int(fileEntry.Size) {
-				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
-			}
-			written, err := io.Copy(buffer, reader)
-			if err != nil {
-				b.Log("Cannot read file", fileEntry.Name, err)
-			} else if written == 0 {
-				b.Log("Empty file", fileEntry.Name)
-			}
-		}
-		reader.Close()
-		bufReaderPool.Put(reader)
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		fileEntry := e.Value.(FileEntry)
+// 		reader, err := getFileReaderFromPool(fileEntry.Name)
+// 		if err != nil {
+// 			b.Log("Cannot open file", fileEntry.Name, err)
+// 		} else {
+// 			buffer := &bytes.Buffer{}
+// 			if buffer.Cap() < int(fileEntry.Size) {
+// 				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
+// 			}
+// 			written, err := io.Copy(buffer, reader)
+// 			if err != nil {
+// 				b.Log("Cannot read file", fileEntry.Name, err)
+// 			} else if written == 0 {
+// 				b.Log("Empty file", fileEntry.Name)
+// 			}
+// 		}
+// 		reader.Close()
+// 		bufReaderPool.Put(reader)
+// 		e = e.Next()
+// 		if e == nil {
+// 			e = fileQueue.Front()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadFromBufIOFromPoolToPoolOfBuffer(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	localBufferPool := sync.Pool{
-		New: func() interface{} {
-			return &bytes.Buffer{}
-		},
-	}
-	e := fileQueue.Front()
+// func BenchmarkReadFromBufIOFromPoolToPoolOfBuffer(b *testing.B) {
+// 	b.ReportAllocs()
+// 	if fileQueue.Len() == 0 {
+// 		b.Skip("No source file")
+// 	}
+// 	localBufferPool := sync.Pool{
+// 		New: func() interface{} {
+// 			return &bytes.Buffer{}
+// 		},
+// 	}
+// 	e := fileQueue.Front()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		reader, err := getFileReaderFromPool(fileEntry.Name)
-		if err != nil {
-			b.Log("Cannot open file", fileEntry.Name, err)
-		} else {
-			buffer := localBufferPool.Get().(*bytes.Buffer)
-			buffer.Reset()
-			if buffer.Cap() < int(fileEntry.Size) {
-				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
-			}
-			written, err := io.Copy(buffer, reader)
-			if err != nil {
-				b.Log("Cannot read file", fileEntry.Name, err)
-			} else if written == 0 {
-				b.Log("Empty file", fileEntry.Name)
-			}
-			localBufferPool.Put(buffer)
-		}
-		reader.Close()
-		bufReaderPool.Put(reader)
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		fileEntry := e.Value.(FileEntry)
+// 		reader, err := getFileReaderFromPool(fileEntry.Name)
+// 		if err != nil {
+// 			b.Log("Cannot open file", fileEntry.Name, err)
+// 		} else {
+// 			buffer := localBufferPool.Get().(*bytes.Buffer)
+// 			buffer.Reset()
+// 			if buffer.Cap() < int(fileEntry.Size) {
+// 				buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
+// 			}
+// 			written, err := io.Copy(buffer, reader)
+// 			if err != nil {
+// 				b.Log("Cannot read file", fileEntry.Name, err)
+// 			} else if written == 0 {
+// 				b.Log("Empty file", fileEntry.Name)
+// 			}
+// 			localBufferPool.Put(buffer)
+// 		}
+// 		reader.Close()
+// 		bufReaderPool.Put(reader)
+// 		e = e.Next()
+// 		if e == nil {
+// 			e = fileQueue.Front()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadFromBufIOToByteSlice(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	e := fileQueue.Front()
+// func BenchmarkReadFromBufIOToByteSlice(b *testing.B) {
+// 	b.ReportAllocs()
+// 	if fileQueue.Len() == 0 {
+// 		b.Skip("No source file")
+// 	}
+// 	e := fileQueue.Front()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		reader, err := getFileReader(fileEntry.Name)
-		if err != nil {
-			b.Log("Cannot open file", fileEntry.Name, err)
-		} else {
-			buffer := make([]byte, fileEntry.Size)
-			read, err := reader.Read(buffer)
-			if err != nil {
-				b.Log("Cannot read file", fileEntry.Name, err)
-			} else if read == 0 {
-				b.Log("Empty file", fileEntry.Name)
-			}
-		}
-		reader.Close()
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		fileEntry := e.Value.(FileEntry)
+// 		reader, err := getFileReader(fileEntry.Name)
+// 		if err != nil {
+// 			b.Log("Cannot open file", fileEntry.Name, err)
+// 		} else {
+// 			buffer := make([]byte, fileEntry.Size)
+// 			read, err := reader.Read(buffer)
+// 			if err != nil {
+// 				b.Log("Cannot read file", fileEntry.Name, err)
+// 			} else if read == 0 {
+// 				b.Log("Empty file", fileEntry.Name)
+// 			}
+// 		}
+// 		reader.Close()
+// 		e = e.Next()
+// 		if e == nil {
+// 			e = fileQueue.Front()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadFromBufIOFromPoolToByteSlice(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	e := fileQueue.Front()
+// func BenchmarkReadFromBufIOFromPoolToByteSlice(b *testing.B) {
+// 	b.ReportAllocs()
+// 	if fileQueue.Len() == 0 {
+// 		b.Skip("No source file")
+// 	}
+// 	e := fileQueue.Front()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		reader, err := getFileReaderFromPool(fileEntry.Name)
-		if err != nil {
-			b.Log("Cannot open file", fileEntry.Name, err)
-		} else {
-			buffer := make([]byte, fileEntry.Size)
-			read, err := reader.Read(buffer)
-			if err != nil {
-				b.Log("Cannot read file", fileEntry.Name, err)
-			} else if read == 0 {
-				b.Log("Empty file", fileEntry.Name)
-			}
-		}
-		reader.Close()
-		bufReaderPool.Put(reader)
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		fileEntry := e.Value.(FileEntry)
+// 		reader, err := getFileReaderFromPool(fileEntry.Name)
+// 		if err != nil {
+// 			b.Log("Cannot open file", fileEntry.Name, err)
+// 		} else {
+// 			buffer := make([]byte, fileEntry.Size)
+// 			read, err := reader.Read(buffer)
+// 			if err != nil {
+// 				b.Log("Cannot read file", fileEntry.Name, err)
+// 			} else if read == 0 {
+// 				b.Log("Empty file", fileEntry.Name)
+// 			}
+// 		}
+// 		reader.Close()
+// 		bufReaderPool.Put(reader)
+// 		e = e.Next()
+// 		if e == nil {
+// 			e = fileQueue.Front()
+// 		}
+// 	}
+// }
 
-func BenchmarkFileRead(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	e := fileQueue.Front()
+// func BenchmarkFileRead(b *testing.B) {
+// 	b.ReportAllocs()
+// 	if fileQueue.Len() == 0 {
+// 		b.Skip("No source file")
+// 	}
+// 	e := fileQueue.Front()
 
-	file := NewFile(int(maxSize))
+// 	file := NewFile(int(maxSize))
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		err := file.Read(fileEntry.Name, fileEntry.Size)
-		if err != nil {
-			b.Log("Cannot read file", fileEntry.Name, err)
-		} else {
-			if !file.IsReady() {
-				b.Log("Error reading file", fileEntry.Name)
-			}
-		}
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		fileEntry := e.Value.(FileEntry)
+// 		err := file.Read(fileEntry.Name, fileEntry.Size)
+// 		if err != nil {
+// 			b.Log("Cannot read file", fileEntry.Name, err)
+// 		} else {
+// 			if !file.IsReady() {
+// 				b.Log("Error reading file", fileEntry.Name)
+// 			}
+// 		}
+// 		e = e.Next()
+// 		if e == nil {
+// 			e = fileQueue.Front()
+// 		}
+// 	}
+// }

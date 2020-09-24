@@ -6,6 +6,8 @@ github.com/bmatcuk/doublestar v1.3.2 h1:mzUncgFmpzNUhIITFqGdZ8nUU0O7JTJzRO8VdkeL
 github.com/bmatcuk/doublestar v1.3.2/go.mod h1:wiQtGV+rzVYxB7WIlirSN++5HPtPlXEo9MEoZQC/PmE=
 github.com/creativeprojects/clog v0.4.2 h1:FZHIAWWtUMJZQlCUC4cYIZUU1INy88AxuKNw++OMLdM=
 github.com/creativeprojects/clog v0.4.2/go.mod h1:ePe00iA7srKh7dcFksHHIGEeRjLmiXvk1afuDXw+CN4=
+github.com/creativeprojects/clog v0.5.0 h1:8L6bIpQweANz/mo+GNVAp6a5nQTScx6r93gQcftZpRo=
+github.com/creativeprojects/clog v0.5.0/go.mod h1:JKXBQnvWR1NBQ52d7ddtUd7qHHxyGHuwtVx5ltgUM34=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
