@@ -21,7 +21,7 @@ profiles:
     utf8-bom: forget
     year: update
     exclude-from: exclude
-    copyright: copyright.txt
+    copyright: short-copyright.txt
     detect-own: '^([ \t\r\n]*/\*[ \t\r\n*]*Copyright[ \t]+\(C\)[ \t]+)([\d]{4})([ \t]+CreativeProjects\.[ \t]*[\r\n]+)'
     detect-others: '^[ \t\r\n]*/\*[ \t\r\n*]*Copyright[ \t]+'
 
