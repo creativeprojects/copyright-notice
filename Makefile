@@ -25,7 +25,11 @@ GO_VERSION=1.15
 BUILD_DATE=`date`
 BUILD_COMMIT=`git rev-parse HEAD`
 
-.PHONY: all test test-ci build build-mac build-linux build-windows build-all coverage clean test-docker build-docker nightly toc
+INTEGRATION_REPO=https://github.com/microsoft/vscode.git
+INTEGRATION_DIR=integration/vscode
+INTEGRATION_BRANCH=release/1.48
+
+.PHONY: all test test-ci build build-mac build-linux build-windows build-all coverage clean test-docker build-docker nightly toc integration
 
 all: test build
 
@@ -76,3 +80,7 @@ toc:
 	go install github.com/ekalinin/github-markdown-toc.go
 	go mod tidy
 	cat README.md | github-markdown-toc.go --hide-footer
+
+integration:
+	rm -rf ${INTEGRATION_DIR}
+	git clone --branch=${INTEGRATION_BRANCH} --depth=1 ${INTEGRATION_REPO} ${INTEGRATION_DIR}

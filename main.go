@@ -118,13 +118,37 @@ func main() {
 		// Load the copyright notice template
 		copyrightNotice, err := getCopyrightNoticeFromTemplate(profile.Copyright, &copyrightData{Year: time.Now().Year()})
 		if err != nil {
-			clog.Errorf("cannot load copyright template: %v", err)
-			return
+			clog.Errorf("cannot load copyright template: %s", err)
+			continue
 		}
+
+		var ownPattern *regexp.Regexp
+		if profile.DetectOwn != "" {
+			ownPattern, err = regexp.Compile(profile.DetectOwn)
+			if err != nil {
+				clog.Errorf("cannot compile 'detect-own' regexp: %s", err)
+				continue
+			}
+		} else {
+			ownPattern = detectOwnHeader
+		}
+
+		var genericPattern *regexp.Regexp
+		if profile.DetectOthers != "" {
+			genericPattern, err = regexp.Compile(profile.DetectOthers)
+			if err != nil {
+				clog.Errorf("cannot compile 'detect-others' regexp: %s", err)
+				continue
+			}
+		} else {
+			genericPattern = detectOtherHeader
+		}
+
+		notice := NewNotice(genericPattern, ownPattern, false)
 
 		// Merge all files with the copyright notice
 		clog.Infof("analyzing %d source files", fileQueue.Len())
-		checkForCopyrightNotices(fileQueue, copyrightNotice)
+		notice.checkForCopyrightNotices(fileQueue, copyrightNotice)
 		// fmt.Println("")
 
 		// Display results in debug mode

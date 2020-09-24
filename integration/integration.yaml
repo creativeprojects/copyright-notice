@@ -1,0 +1,13 @@
+---
+profiles:
+  vscode:
+    source: integration/vscode
+    extensions:
+      - js
+      - ts
+    utf8-bom: keep
+    year: false
+    exclude-from: exclude
+    copyright: integration/microsoft.txt
+    detect-own: '^([ \t\r\n]*/\*-+[ \t\r\n]+[ \t]+\*[ \t]+Copyright[ \t]+\(c\)[ \t]+Microsoft Corporation\.)'
+    detect-others: '^[ \t\r\n]*\*[ \t\r\n*]*Copyright[ \t]+'

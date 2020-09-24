@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +15,21 @@ import (
 	"github.com/vbauerster/mpb/v5/decor"
 )
 
-func checkForCopyrightNotices(fileQueue *list.List, copyrightNotice []byte) {
+type Notice struct {
+	genericPattern *regexp.Regexp
+	ownPattern     *regexp.Regexp
+	keepUTF8BOM    bool
+}
+
+func NewNotice(genericPattern, ownPattern *regexp.Regexp, keepUTF8BOM bool) Notice {
+	return Notice{
+		genericPattern: genericPattern,
+		ownPattern:     ownPattern,
+		keepUTF8BOM:    keepUTF8BOM,
+	}
+}
+
+func (n Notice) checkForCopyrightNotices(fileQueue *list.List, copyrightNotice []byte) {
 	start := time.Now()
 	progress := mpb.New()
 	bar := progress.AddBar(int64(fileQueue.Len()),
@@ -26,13 +41,13 @@ func checkForCopyrightNotices(fileQueue *list.List, copyrightNotice []byte) {
 	for e := fileQueue.Front(); e != nil; e = e.Next() {
 		bar.Increment()
 		fileEntry := e.Value.(FileEntry)
-		checkForCopyrightNoticeInFile(file, fileEntry, copyrightNotice)
+		n.checkForCopyrightNoticeInFile(file, fileEntry, copyrightNotice)
 	}
 	progress.Wait()
 	clog.Infof("finished analyzing files in %s", time.Since(start))
 }
 
-func checkForCopyrightNoticeInFile(file *File, fileEntry FileEntry, copyrightNotice []byte) {
+func (n Notice) checkForCopyrightNoticeInFile(file *File, fileEntry FileEntry, copyrightNotice []byte) {
 	var err error
 
 	err = file.Read(fileEntry.Name, fileEntry.Size)
@@ -62,10 +77,10 @@ func checkForCopyrightNoticeInFile(file *File, fileEntry FileEntry, copyrightNot
 		return
 	}
 	// Use the regexp to detect if the copyright header is present
-	found := detectOtherHeader.FindIndex(buffer)
+	found := n.genericPattern.FindIndex(buffer)
 	if found != nil {
 		// Header was found, now we need to check if the year is right
-		yearMatch := detectOwnHeader.FindSubmatch(buffer)
+		yearMatch := n.ownPattern.FindSubmatch(buffer)
 		// yearMatch: The first []byte is the whole match, then each one after are from the capturing parenthesis:
 		// so the next one will be the string before the year, then the year, then the rest of the line
 		if yearMatch == nil || len(yearMatch) <= 3 {
@@ -93,7 +108,7 @@ func checkForCopyrightNoticeInFile(file *File, fileEntry FileEntry, copyrightNot
 		if year < currentYear {
 			// We need to update the existing copyright header
 			if !flags.dryRun {
-				buffer = detectOwnHeader.ReplaceAll(buffer, []byte("${1}"+strconv.Itoa(currentYear)+"${3}"))
+				buffer = n.ownPattern.ReplaceAll(buffer, []byte("${1}"+strconv.Itoa(currentYear)+"${3}"))
 				err = ioutil.WriteFile(fileEntry.Name, buffer, 0666)
 				if err != nil {
 					progress(fileEntry.Name, fileStatusError, err)
