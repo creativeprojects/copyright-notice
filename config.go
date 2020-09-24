@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -33,20 +34,20 @@ func (a *StringSlice) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Config struct {
-	MaxFileSize       int64                     `yaml:"max-file-size"`
-	DefaultBufferSize int                       `yaml:"default-buffer-size"`
-	Profiles          map[string]ConfigProfiles `yaml:"profiles"`
+	MaxFileSize       int64                    `yaml:"max-file-size"`
+	DefaultBufferSize int                      `yaml:"default-buffer-size"`
+	Profiles          map[string]ConfigProfile `yaml:"profiles"`
 }
 
-type ConfigProfiles struct {
-	Source               *StringSlice `yaml:"source"`
-	Extensions           *StringSlice `yaml:"extensions"`
+type ConfigProfile struct {
+	Source               *StringSlice `yaml:"source"`     // Mandatory
+	Extensions           *StringSlice `yaml:"extensions"` // Mandatory
+	Copyright            string       `yaml:"copyright"`  // Mandatory
 	BOM                  string       `yaml:"utf8-bom"`
 	Year                 string       `yaml:"year"`
+	Excludes             *StringSlice `yaml:"excludes"`
 	ExcludeFrom          string       `yaml:"exclude-from"`
 	ExcludeFromGitIgnore string       `yaml:"exclude-gitignore"`
-	Excludes             *StringSlice `yaml:"excludes"`
-	Copyright            string       `yaml:"copyright"`
 	DetectOwn            string       `yaml:"detect-own"`
 	DetectOthers         string       `yaml:"detect-others"`
 	CommitChanges        string       `yaml:"commit-changes"`
@@ -62,9 +63,36 @@ func NewConfig() Config {
 	}
 }
 
+// LoadFileConfig loads YAML configuration from a file
+func LoadFileConfig(filename string) (Config, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return NewConfig(), err
+	}
+	defer file.Close()
+	return LoadConfig(file)
+}
+
+// LoadConfig loads YAML configuration from a reader
 func LoadConfig(reader io.Reader) (Config, error) {
 	decoder := yaml.NewDecoder(reader)
-	config := Config{}
+	config := NewConfig()
 	err := decoder.Decode(&config)
+	cleanupConfig(&config)
 	return config, err
+}
+
+func cleanupConfig(config *Config) {
+	for _, profile := range config.Profiles {
+		// We'll prefix the files extension by a dot if it's not there yet
+		if profile.Extensions == nil {
+			continue
+		}
+		for index, extension := range *profile.Extensions {
+			if extension[0] != '.' {
+				extension = "." + extension
+			}
+			(*profile.Extensions)[index] = extension
+		}
+	}
 }

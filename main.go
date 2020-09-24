@@ -61,7 +61,7 @@ func init() {
 }
 
 func main() {
-	var err error
+	// var err error
 
 	flag.Parse()
 	if flags.help {
@@ -69,52 +69,70 @@ func main() {
 		flag.PrintDefaults()
 		return
 	}
-	setupLogger()
-	clog.Infof("starting copyright notice in source folder: '%s'", flags.sourceDirectory)
+	close := setupLogger(flags)
+	defer close()
 
-	// We need at least one file extension
-	if len(flags.extensions) == 0 {
-		clog.Error("you haven't specified any file extension, for example '--ext js' for Javascript files")
-		return
-	}
-	cleanupConfiguration()
-	clog.Infof("searching for source files with extensions %v", flags.extensions)
-
-	// Load exclusion list from file
-	var excludeList []string
-	if flags.excludeFilename != "" {
-		excludeList, err = readLines(flags.excludeFilename)
-		if err != nil {
-			clog.Errorf("error while reading exclusion file: %w", err)
-		}
-	}
-	// Generate the exclusions
-	exclusions := newExclusion(append(excludeList, flags.exclude...)...)
-
-	// Parse the source directory for files
-	parseDirectories(flags.sourceDirectory, exclusions)
-	if fileQueue.Len() == 0 {
-		clog.Warning("found absolutely no file matching these extensions")
-		return
-	}
-
-	// Load the copyright notice template
-	clog.Infof("analyzing %d source files", fileQueue.Len())
-	copyrightNotice, err := getCopyrightNoticeFromTemplate(flags.copyrightFilename, &copyrightData{Year: time.Now().Year()})
+	// load configuration
+	config, err := LoadFileConfig(flags.configFile)
 	if err != nil {
-		clog.Errorf("cannot load copyright template: %w", err)
-		return
+		clog.Errorf("cannot open configuration file: %s", err)
 	}
 
-	// Merge all files with the copyright notice
-	checkForCopyrightNotices(copyrightNotice)
-	fmt.Println("")
+	for name, profile := range config.Profiles {
+		if profile.Source == nil || len(*profile.Source) == 0 {
+			clog.Warningf("skipping profile %s: no source folder defined", name)
+			continue
+		}
+		if profile.Extensions == nil || len(*profile.Extensions) == 0 {
+			clog.Warningf("skipping profile %s: no file extension defined", name)
+			continue
+		}
+		if profile.Copyright == "" {
+			clog.Warningf("skipping profile %s: no copyright file defined", name)
+			continue
+		}
+		clog.Infof("searching for source files %v in folder: %v", *profile.Extensions, *profile.Source)
 
-	// Display results in debug mode
-	if flags.verbose {
-		displayDetailedResults()
-	} else {
-		displaySummaryResults()
+		var excludeList []string
+		// Load exclusion list from file
+		if profile.ExcludeFrom != "" {
+			excludeList, err = readLines(profile.ExcludeFrom)
+			if err != nil {
+				clog.Errorf("skipping profile %s: error while reading exclusion file: %v", name, err)
+				continue
+			}
+		}
+		if profile.Excludes != nil && len(*profile.Excludes) > 0 {
+			excludeList = append(excludeList, *profile.Excludes...)
+		}
+		// // Generate the exclusions
+		// exclusions := newExclusion(append(excludeList, flags.exclude...)...)
+
+		// // Parse the source directory for files
+		// parseDirectories(flags.sourceDirectory, exclusions)
+		// if fileQueue.Len() == 0 {
+		// 	clog.Warning("found absolutely no file matching these extensions")
+		// 	return
+		// }
+
+		// // Load the copyright notice template
+		// clog.Infof("analyzing %d source files", fileQueue.Len())
+		// copyrightNotice, err := getCopyrightNoticeFromTemplate(flags.copyrightFilename, &copyrightData{Year: time.Now().Year()})
+		// if err != nil {
+		// 	clog.Errorf("cannot load copyright template: %w", err)
+		// 	return
+		// }
+
+		// // Merge all files with the copyright notice
+		// // checkForCopyrightNotices(copyrightNotice)
+		// fmt.Println("")
+
+		// // Display results in debug mode
+		// if flags.verbose {
+		// 	displayDetailedResults()
+		// } else {
+		// 	displaySummaryResults()
+		// }
 	}
 }
 

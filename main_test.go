@@ -10,8 +10,8 @@ import (
 )
 
 func init() {
-	flags.extensions = []string{".go"}
-	cleanupConfiguration()
+	// flags.extensions = []string{".go"}
+	// cleanupConfiguration()
 
 	excludeList := []string{
 		"**/.*",
@@ -32,11 +32,11 @@ func init() {
 	parseDirectory(parseDir, exclusions, func(int) {}, func() {})
 }
 
-func TestMaxSize(t *testing.T) {
-	t.Log("Found", fileQueue.Len(), "files")
-	t.Log("Max file size", maxSize, "kb")
-	t.Log("Average file size", int(maxSize)/fileQueue.Len(), "kb")
-}
+// func TestMaxSize(t *testing.T) {
+// 	t.Log("Found", fileQueue.Len(), "files")
+// 	t.Log("Max file size", maxSize, "kb")
+// 	t.Log("Average file size", int(maxSize)/fileQueue.Len(), "kb")
+// }
 
 // New Results with isolated runs:
 // BenchmarkReadIntoByteSlice-12                       7218	    162098 ns/op	   11413 B/op	       6 allocs/op
@@ -57,67 +57,6 @@ func TestMaxSize(t *testing.T) {
 // BenchmarkReadIntoBytesBufferWithPool-6                     26488             46162 ns/op            1555 B/op          7 allocs/op
 // BenchmarkReadIntoBufIO-6                                   30105             40449 ns/op           17918 B/op          9 allocs/op
 // BenchmarkReadIntoBufIOFromPool-6                           35013             33851 ns/op            1382 B/op          6 allocs/op
-
-func BenchmarkReadIntoBytesBuffer(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	e := fileQueue.Front()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		buffer := &bytes.Buffer{}
-		if buffer.Cap() < int(fileEntry.Size) {
-			buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
-		}
-		err := readFileIntoBuffer(fileEntry.Name, buffer)
-		if err != nil {
-			b.Log("Cannot read file", fileEntry.Name, err)
-		} else if buffer.Len() == 0 {
-			b.Log("Empty file", fileEntry.Name)
-		}
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
-
-func BenchmarkReadIntoBytesBufferWithPool(b *testing.B) {
-	b.ReportAllocs()
-	if fileQueue.Len() == 0 {
-		b.Skip("No source file")
-	}
-	localBufferPool := sync.Pool{
-		New: func() interface{} {
-			return &bytes.Buffer{}
-		},
-	}
-	e := fileQueue.Front()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		fileEntry := e.Value.(FileEntry)
-		buffer := localBufferPool.Get().(*bytes.Buffer)
-		buffer.Reset()
-		if buffer.Cap() < int(fileEntry.Size) {
-			buffer.Grow(int(fileEntry.Size) - buffer.Cap() + 1)
-		}
-		err := readFileIntoBuffer(fileEntry.Name, buffer)
-		if err != nil {
-			b.Log("Cannot read file", fileEntry.Name, err)
-		} else if buffer.Len() == 0 {
-			b.Log("Empty file", fileEntry.Name)
-		}
-		localBufferPool.Put(buffer)
-		e = e.Next()
-		if e == nil {
-			e = fileQueue.Front()
-		}
-	}
-}
 
 func BenchmarkReadFromBufIOToBuffer(b *testing.B) {
 	b.ReportAllocs()

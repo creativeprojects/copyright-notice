@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/creativeprojects/clog"
 	"github.com/vbauerster/mpb/v5"
@@ -74,10 +73,10 @@ func parseDirectory(directory string, exclusions *exclusion, addTotal func(int),
 }
 
 func matchExtension(fileName string) bool {
-	for _, ext := range flags.extensions {
-		if strings.HasSuffix(fileName, ext) {
-			return true
-		}
-	}
+	// for _, ext := range flags.extensions {
+	// 	if strings.HasSuffix(fileName, ext) {
+	// 		return true
+	// 	}
+	// }
 	return false
 }

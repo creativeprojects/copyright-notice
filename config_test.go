@@ -36,3 +36,20 @@ profiles:
 	require.NoError(t, err)
 	assert.NotEmpty(t, config)
 }
+
+func TestCleanupFileExtensions(t *testing.T) {
+	config := Config{
+		Profiles: map[string]ConfigProfile{
+			"first": {
+				Extensions: &StringSlice{"js", ".ts"},
+			},
+			"second": {
+				Extensions: &StringSlice{".cs", "yaml"},
+			},
+		},
+	}
+	cleanupConfig(&config)
+	assert.Len(t, config.Profiles, 2)
+	assert.ElementsMatch(t, []string(*config.Profiles["first"].Extensions), []string{".js", ".ts"})
+	assert.ElementsMatch(t, []string(*config.Profiles["second"].Extensions), []string{".cs", ".yaml"})
+}

@@ -1,5 +1,20 @@
 ---
 profiles:
+  no-source:
+
+  no-extension:
+    source: .
+
+  no-copyright:
+    source: .
+    extensions: ".txt"
+
+  exclusion-from-error:
+    source: .
+    extensions: ".txt"
+    copyright: "copyright.txt"
+    exclude-from: "somefile"
+
   self:
     source: .
     extensions: go
