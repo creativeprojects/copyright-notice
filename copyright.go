@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"runtime"
 	"strings"
 	"text/template"
 )
@@ -91,6 +92,10 @@ func (t *CopyrightTemplate) GetRegexp() (*regexp.Regexp, error) {
 }
 
 func convertTextToRegexp(text string) (*regexp.Regexp, error) {
+	EOL := "\n"
+	if runtime.GOOS == "windows" {
+		EOL = "\r\n"
+	}
 	escapeChars := []string{`\`, `^`, `$`, `.`, `|`, `?`, `*`, `+`, `(`, `)`, `[`, `]`, `{`, `}`}
 	for _, escapeChar := range escapeChars {
 		text = strings.ReplaceAll(text, escapeChar, `\`+escapeChar)
@@ -98,10 +103,9 @@ func convertTextToRegexp(text string) (*regexp.Regexp, error) {
 	// put back any year into the template
 	text = strings.ReplaceAll(text, magicYear, yearRegexp)
 	// replace beginning of line by something more permissive
-	text = strings.ReplaceAll(text, "\n \\*", "\n[ \t]*\\*")
+	text = strings.ReplaceAll(text, EOL+" \\*", EOL+"[ \t]*\\*")
 	// replace end of line by something a bit more permissive
-	text = strings.ReplaceAll(text, "\n", `[\s]+`)
-	text = strings.ReplaceAll(text, "\r\n", `[\s]+`)
+	text = strings.ReplaceAll(text, EOL, `[\s]+`)
 	// quick hack for the case a file only has a header with no return at the end
 	if text[len(text)-1] == '+' {
 		text = text[:len(text)-1] + "*"
