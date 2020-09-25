@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -44,7 +45,7 @@ type ConfigProfile struct {
 	Extensions           *StringSlice `yaml:"extensions"` // Mandatory
 	Copyright            string       `yaml:"copyright"`  // Mandatory
 	BOM                  string       `yaml:"utf8-bom"`
-	Year                 string       `yaml:"year"`
+	Year                 *ConfigYear  `yaml:"year"`
 	Excludes             *StringSlice `yaml:"excludes"`
 	ExcludeFrom          string       `yaml:"exclude-from"`
 	ExcludeFromGitIgnore string       `yaml:"exclude-gitignore"`
@@ -54,6 +55,34 @@ type ConfigProfile struct {
 	CommitMessage        string       `yaml:"commit-message"`
 	CommitAuthor         string       `yaml:"commit-author"`
 	Output               string       `yaml:"output"`
+}
+
+type ConfigYear int
+
+// ConfigYear
+const (
+	ConfigNoYear ConfigYear = iota
+	ConfigLeaveYear
+	ConfigUpdateYear
+)
+
+// UnmarshalYAML into a ConfigYear
+func (y *ConfigYear) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	value := ""
+	err := unmarshal(&value)
+	if err != nil {
+		return err
+	}
+	value = strings.ToLower(value)
+	switch value {
+	case "leave":
+		*y = ConfigLeaveYear
+	case "update":
+		*y = ConfigUpdateYear
+	default:
+		*y = ConfigNoYear
+	}
+	return nil
 }
 
 // NewConfig creates a new configuration with the default values
@@ -99,6 +128,10 @@ func cleanupConfig(config *Config) {
 			for index, dir := range *profile.Source {
 				(*profile.Source)[index] = os.ExpandEnv(dir)
 			}
+		}
+		// make sure year has a default value
+		if profile.Year == nil {
+			profile.Year = new(ConfigYear)
 		}
 	}
 }

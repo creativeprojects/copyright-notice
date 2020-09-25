@@ -22,8 +22,6 @@ profiles:
     year: update
     exclude-from: exclude
     copyright: short-copyright.txt
-    detect-own: '^([ \t\r\n]*/\*[ \t\r\n*]*Copyright[ \t]+\(C\)[ \t]+)([\d]{4})([ \t]+CreativeProjects\.[ \t]*[\r\n]+)'
-    detect-others: '^[ \t\r\n]*/\*[ \t\r\n*]*Copyright[ \t]+'
 
   # gopath:
   #   source: $HOME/go
