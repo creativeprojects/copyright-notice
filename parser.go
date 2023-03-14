@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -10,9 +11,23 @@ import (
 	"github.com/vbauerster/mpb/v5/decor"
 )
 
-func parseDirectories(directories []string, exclusions *exclusion) {
+type Parser struct {
+	extensions []string
+	exclusions *exclusion
+	fileQueue  *list.List
+}
+
+func NewParser(extensions []string, exclusions *exclusion) *Parser {
+	return &Parser{
+		extensions: extensions,
+		exclusions: exclusions,
+		fileQueue:  list.New(),
+	}
+}
+
+func (p *Parser) Directories(directories []string) *list.List {
 	if directories == nil || len(directories) == 0 {
-		return
+		return p.fileQueue
 	}
 	total := int64(len(directories))
 	progress := mpb.New(nil)
@@ -24,7 +39,7 @@ func parseDirectories(directories []string, exclusions *exclusion) {
 		if source == "" {
 			continue
 		}
-		parseDirectory(source, exclusions,
+		p.directory(source,
 			func(more int) {
 				total += int64(more)
 				spinner.SetTotal(total, false)
@@ -35,13 +50,14 @@ func parseDirectories(directories []string, exclusions *exclusion) {
 	}
 	spinner.SetTotal(total, true)
 	progress.Wait()
+	return p.fileQueue
 }
 
-func parseDirectory(directory string, exclusions *exclusion, addTotal func(int), addFile func()) {
+func (p *Parser) directory(directory string, addTotal func(int), addFile func()) {
 	directory = filepath.Clean(directory)
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {
-		clog.Errorf("cannot parse directory: %w", err)
+		clog.Errorf("cannot parse directory: %s", err)
 	}
 	if files == nil || len(files) == 0 {
 		return
@@ -54,24 +70,27 @@ func parseDirectory(directory string, exclusions *exclusion, addTotal func(int),
 		}
 
 		fullName := filepath.Join(directory, file.Name())
-		if exclusions.match(fullName) {
+		if p.exclusions.match(fullName) {
 			clog.Debugf("path excluded: '%s'", fullName)
 			continue
 		}
 		addFile()
 		if file.IsDir() {
-			parseDirectory(fullName, exclusions, addTotal, addFile)
-		} else if file.Size() > minFileSize && matchExtension(file.Name()) {
-			fileQueue.PushBack(FileEntry{fullName, file.Size()})
-			if file.Size() > maxSize {
+			p.directory(fullName, addTotal, addFile)
+		} else if file.Size() > minFileSize && p.matchExtension(file.Name()) {
+			p.fileQueue.PushBack(FileEntry{fullName, file.Size()})
+			// update the max size of the files we're going to analyze,
+			// we keep the oversized file for reporting, but we won't build
+			// a buffer of that size
+			if file.Size() > maxSize && file.Size() <= maxFileSize {
 				maxSize = file.Size()
 			}
 		}
 	}
 }
 
-func matchExtension(fileName string) bool {
-	for _, ext := range config.extensions {
+func (p *Parser) matchExtension(fileName string) bool {
+	for _, ext := range p.extensions {
 		if strings.HasSuffix(fileName, ext) {
 			return true
 		}

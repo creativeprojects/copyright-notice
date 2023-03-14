@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -11,7 +10,7 @@ import (
 )
 
 const (
-	bufferDefaultSize = 16384
+	defaultBufferSize = 16384
 )
 
 var (
@@ -24,7 +23,7 @@ func init() {
 		New: func() interface{} {
 			return newSourceFileReader(
 				// Creates a reader using stdin. Actually stdin will never be read but a valid default is needed
-				bufio.NewReaderSize(os.Stdin, bufferDefaultSize),
+				bufio.NewReaderSize(os.Stdin, defaultBufferSize),
 				ioutil.NopCloser(os.Stdin),
 			)
 		},
@@ -71,7 +70,7 @@ func getFileReader(fileName string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	buffer := bufio.NewReaderSize(file, bufferDefaultSize)
+	buffer := bufio.NewReaderSize(file, defaultBufferSize)
 	bom, err := buffer.Peek(3)
 	if err != nil {
 		progress(fileName, fileStatusError, err)
@@ -111,60 +110,4 @@ func getFileReaderFromPool(fileName string) (io.ReadCloser, error) {
 		}
 	}
 	return fileReader, nil
-}
-
-func readFileIntoBuffer(fileName string, buffer *bytes.Buffer) error {
-	var err error
-	if buffer == nil {
-		panic("buffer parameter cannot be nil")
-	}
-
-	file, err := os.Open(fileName)
-	if err != nil {
-		progress(fileName, fileStatusCannotOpen, err)
-		return err
-	}
-	defer file.Close()
-	info, err := file.Stat()
-	if err != nil {
-		progress(fileName, fileStatusCannotOpen, err)
-		return err
-	}
-	if info.Size() > maxFileSize {
-		progress(fileName, fileStatusTooBig, nil)
-		return err
-	}
-	fileSize := info.Size()
-
-	// Read the first 3 bytes and see if it's a BOM.
-	// If it is, we're going to ignore it (and save the file without)
-	// Don't worry, Visual Studio will put it back eventually
-	// var bom [3]byte
-	// _, err = io.ReadFull(file, bom[:])
-	// if err != nil {
-	// 	progress(fileName, fileStatusError, err)
-	// 	return err
-	// }
-	// if bom[0] != 0xef || bom[1] != 0xbb || bom[2] != 0xbf {
-	// 	_, err = file.Seek(0, 0) // Not a BOM -- seek back to the beginning
-	// 	if err != nil {
-	// 		progress(fileName, fileStatusError, err)
-	// 		return err
-	// 	}
-	// } else {
-	// 	// Forget the first 3 bytes
-	// 	fileSize -= 3
-	// }
-
-	// buffer := &bytes.Buffer{}
-	bytesRead, err := buffer.ReadFrom(file)
-	if err != nil && err != io.EOF {
-		progress(fileName, fileStatusError, err)
-		return err
-	}
-	if err == io.EOF || bytesRead != fileSize {
-		progress(fileName, fileStatusError, fmt.Errorf("file size = %d bytes but read %d bytes instead", fileSize, bytesRead))
-		return err
-	}
-	return nil
 }

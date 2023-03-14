@@ -1,0 +1,36 @@
+---
+profiles:
+  # no-source:
+
+  # no-extension:
+  #   source: .
+
+  # no-copyright:
+  #   source: .
+  #   extensions: ".txt"
+
+  # exclusion-from-error:
+  #   source: .
+  #   extensions: ".txt"
+  #   copyright: "copyright.txt"
+  #   exclude-from: "somefile"
+
+  self:
+    source: .
+    extensions: go
+    utf8-bom: forget
+    year: update
+    exclude-from: exclude
+    copyright: short-copyright.txt
+
+  # gopath:
+  #   source: $HOME/go
+  #   extensions:
+  #     - go
+  #     - js
+  #   utf8-bom: keep
+  #   excludes:
+  #     - node_modules
+  #     - "**/.*"
+  #     - vendor
+  #   copyright: short-copyright.txt
